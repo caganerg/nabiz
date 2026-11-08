@@ -41,14 +41,14 @@ const FIRST_SAMPLE: Duration = Duration::from_millis(250);
 const HISTORY_LEN: usize = 60;
 
 const USAGE: &str = "\
-nabiz — per-core CPU usage, Intel core temperatures, RAM and swap
+nabiz — çekirdek başına CPU kullanımı, Intel çekirdek sıcaklıkları, RAM ve swap
 
-Usage: nabiz [--once]
+Kullanım: nabiz [--once]
 
-Options:
-  --once         Print one plain-text snapshot to stdout and exit
-  -h, --help     Show this help
-  -V, --version  Show version
+Seçenekler:
+  --once         Tek bir düz metin anlık görüntüsü yazdırıp çık
+  -h, --help     Bu yardımı göster
+  -V, --version  Sürümü göster
 ";
 
 fn main() -> ExitCode {
@@ -79,10 +79,7 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         _ => {
-            eprint!(
-                "nabiz: unrecognised arguments: {}\n\n{USAGE}",
-                args.join(" ")
-            );
+            eprint!("nabiz: tanınmayan argüman: {}\n\n{USAGE}", args.join(" "));
             ExitCode::from(2)
         }
     }
@@ -173,7 +170,7 @@ fn step_interval(index: usize, action: Action) -> usize {
 fn run_tui() -> io::Result<()> {
     if !io::stdout().is_terminal() {
         return Err(io::Error::other(
-            "stdout is not a terminal (use --once for plain-text output)",
+            "stdout bir terminal değil (düz metin çıktı için --once kullanın)",
         ));
     }
     let theme = Theme::new(ColorMode::detect(

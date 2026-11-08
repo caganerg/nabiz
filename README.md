@@ -16,23 +16,23 @@ görünmüyor):
 
 ```
 ╭ nabiz ───────────────────────────────────────────────────────────────────────────────────╮
-│  Intel Core i5-8500T @ 2.10GHz                                                up 5h 42m  │
-│  CPU  34%    Package 61°C                                                           ▃▄▃  │
+│  Intel Core i5-8500T @ 2.10GHz                                            açık 5sa 42dk  │
+│  CPU  %34    Paket 61°C                                                             ▃▄▃  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
-╭ Cores ────────────────────────────────────────────────────────────── 6 cores · 6 threads ╮
-│  cpu0   ███████████████████████████████████████████████████████████████████ 100%   61°C  │
-│  cpu1   ▋··································································   1%   49°C  │
-│  cpu2   ██▋································································   4%   50°C  │
-│  cpu3   ███████████████████████████████████████████████████████████████████ 100%   58°C  │
-│  cpu4   █▍·································································   2%   47°C  │
-│  cpu5   ···································································   0%   46°C  │
+╭ Çekirdekler ──────────────────────────────────────────────── 6 çekirdek · 6 iş parçacığı ╮
+│  cpu0   ███████████████████████████████████████████████████████████████████ %100   61°C  │
+│  cpu1   ▋··································································   %1   49°C  │
+│  cpu2   ██▋································································   %4   50°C  │
+│  cpu3   ███████████████████████████████████████████████████████████████████ %100   58°C  │
+│  cpu4   █▍·································································   %2   47°C  │
+│  cpu5   ···································································   %0   46°C  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
-╭ Memory ───────────────────────────────────────────────────────────────── █ used  █ cache ╮
-│  RAM   ███████████████████████████▍███████████████████████▎    8.1 GiB / 15.3 GiB   53%  │
-│  Swap  ····················································    0.0 MiB / 12.3 GiB    0%  │
+╭ Bellek ──────────────────────────────────────────────────────── █ kullanılan  █ önbellek ╮
+│  RAM   ███████████████████████████▍███████████████████████▎    8,1 GiB / 15,3 GiB   %53  │
+│  Swap  ····················································    0,0 MiB / 12,3 GiB    %0  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
 
-  q quit    +/- interval                                                          every 1s
+  q çıkış    +/- aralık                                                         her 1 sn  
 ```
 
 Hyper-Threading açıksa kardeş thread'ler köşeli bir parantezle çift olarak
@@ -41,20 +41,20 @@ E-çekirdekler ayrı gruplarda gösterilir. Aşağıdaki görüntü, testlerdeki
 fikstürünün 120 sütunda, her çekirdek %60 yükteyken çizilmiş hâli:
 
 ```
-╭ Cores ─────────────────────────────────────────────────────────────────────────────────── 6P + 8E cores · 20 threads ╮
-│  P  Performance   6 cores · 12 threads                                                                               │
-│  cpu0  ╭ █████████████████████··············  60%   50°C    cpu6  ╭ █████████████████████··············  60%   62°C  │
-│  cpu1  ╰ █████████████████████··············  60%   50°C    cpu7  ╰ █████████████████████··············  60%   62°C  │
-│  cpu2  ╭ █████████████████████··············  60%   54°C    cpu8  ╭ █████████████████████··············  60%   66°C  │
-│  cpu3  ╰ █████████████████████··············  60%   54°C    cpu9  ╰ █████████████████████··············  60%   66°C  │
-│  cpu4  ╭ █████████████████████··············  60%   58°C    cpu10 ╭ █████████████████████··············  60%   70°C  │
-│  cpu5  ╰ █████████████████████··············  60%   58°C    cpu11 ╰ █████████████████████··············  60%   70°C  │
+╭ Çekirdekler ───────────────────────────────────────────────────────────────────── 6P + 8E çekirdek · 20 iş parçacığı ╮
+│  P  Performans   6 çekirdek · 12 iş parçacığı                                                                        │
+│  cpu0  ╭ █████████████████████··············  %60   50°C    cpu6  ╭ █████████████████████··············  %60   62°C  │
+│  cpu1  ╰ █████████████████████··············  %60   50°C    cpu7  ╰ █████████████████████··············  %60   62°C  │
+│  cpu2  ╭ █████████████████████··············  %60   54°C    cpu8  ╭ █████████████████████··············  %60   66°C  │
+│  cpu3  ╰ █████████████████████··············  %60   54°C    cpu9  ╰ █████████████████████··············  %60   66°C  │
+│  cpu4  ╭ █████████████████████··············  %60   58°C    cpu10 ╭ █████████████████████··············  %60   70°C  │
+│  cpu5  ╰ █████████████████████··············  %60   58°C    cpu11 ╰ █████████████████████··············  %60   70°C  │
 │                                                                                                                      │
-│  E  Efficiency   8 cores · 8 threads                                                                                 │
-│  cpu12   █████████████████████··············  60%   34°C    cpu16   █████████████████████··············  60%   38°C  │
-│  cpu13   █████████████████████··············  60%   35°C    cpu17   █████████████████████··············  60%   39°C  │
-│  cpu14   █████████████████████··············  60%   36°C    cpu18   █████████████████████··············  60%   40°C  │
-│  cpu15   █████████████████████··············  60%   37°C    cpu19   █████████████████████··············  60%   41°C  │
+│  E  Verimlilik   8 çekirdek · 8 iş parçacığı                                                                         │
+│  cpu12   █████████████████████··············  %60   34°C    cpu16   █████████████████████··············  %60   38°C  │
+│  cpu13   █████████████████████··············  %60   35°C    cpu17   █████████████████████··············  %60   39°C  │
+│  cpu14   █████████████████████··············  %60   36°C    cpu18   █████████████████████··············  %60   40°C  │
+│  cpu15   █████████████████████··············  %60   37°C    cpu19   █████████████████████··············  %60   41°C  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -116,7 +116,7 @@ makinelerin tamamını tarif eder:
 - iki paketinde de `Core 0` bulunan çift soketli bir makine
 
 Arayüz testleri ratatui'nin `TestBackend`'ine çizer ve şunları kontrol eder:
-yerleşim, sütunlara dağılım, HT eşleştirmesi, taşma notu, "terminal çok küçük"
+yerleşim, sütunlara dağılım, HT eşleştirmesi, taşma notu, "Terminal çok küçük"
 ekranı ve `NO_COLOR` açıkken hiçbir hücrenin renklenmemesi.
 
 ## Tasarım notları
@@ -180,7 +180,7 @@ Palet yumuşak tonlardadır (Nord benzeri); ekran sakin kalır, sayılar öne ç
   bir HT çifti asla bölünmez.
 - En geniş yerleşim bile bütün çekirdekleri gösteremiyorsa, görünenler kesintisiz
   bir aralık olur ve kaç tanesinin gizlendiğini söyleyen bir not çıkar. 50×12'nin
-  altında, yerleşimin yerine "terminal çok küçük" mesajı gösterilir.
+  altında, yerleşimin yerine "Terminal çok küçük" mesajı gösterilir.
 
 ### Çalışma zamanı davranışı
 
@@ -190,7 +190,7 @@ Palet yumuşak tonlardadır (Nord benzeri); ekran sakin kalır, sayılar öne ç
   Topoloji yalnızca çevrimiçi CPU kümesi değiştiğinde yeniden okunur. Ölçülen
   yük, varsayılan 1 sn aralıkta bir çekirdeğin yaklaşık %0,3'ü (10 sn'de 27 ms
   CPU zamanı), 250 ms'de ise yaklaşık %1'idir.
-- İlk kare sahte bir %0 yerine "measuring…" yazar. İkinci örnek 250 ms sonra
+- İlk kare sahte bir %0 yerine "ölçülüyor…" yazar. İkinci örnek 250 ms sonra
   alınır, böylece gerçek sayılar neredeyse hemen gelir.
 - Terminal üç durumda eski hâline getirilir (raw mod kapatılır, alternatif
   ekrandan çıkılır, imleç gösterilir): normal çıkışta ve `?` hatalarında bir
@@ -202,9 +202,9 @@ Palet yumuşak tonlardadır (Nord benzeri); ekran sakin kalır, sayılar öne ç
 - Crate kökünde `#![forbid(unsafe_code)]` vardır. FFI yoktur, kendi `libc`
   çağrılarımız da yoktur.
 - Çalışma zamanı verisi üzerinde `unwrap()` / `expect()` yoktur. Eksik ya da
-  bozuk bir dosya yalnızca ilgili alanı "unavailable" ya da `—` yapar; programı
+  bozuk bir dosya yalnızca ilgili alanı "okunamadı" ya da `—` yapar; programı
   asla durdurmaz. Örneğin okunamayan bir `/proc/meminfo` bellek kartında
-  "unavailable" gösterir, okunamayan tek bir sensör ise yalnızca o çekirdeğin
+  "okunamadı" gösterir, okunamayan tek bir sensör ise yalnızca o çekirdeğin
   sıcaklığını düşürür.
 
 ### Bağımlılıklar

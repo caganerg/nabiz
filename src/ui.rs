@@ -78,7 +78,7 @@ pub fn draw(frame: &mut Frame, snap: &Snapshot, view: &View) {
 
     let t = &view.theme;
     draw_header(frame, header, snap, view, vpad);
-    let block = card(t, "Cores", vpad).title_top(cores_summary(snap, t).right_aligned());
+    let block = card(t, "Çekirdekler", vpad).title_top(cores_summary(snap, t).right_aligned());
     frame.render_widget(Paragraph::new(cores).block(block), cores_area);
     draw_memory(frame, mem, snap, t, vpad);
     draw_footer(frame, footer, view);
@@ -127,9 +127,14 @@ fn draw_header(frame: &mut Frame, area: Rect, snap: &Snapshot, view: &View, vpad
 
     let up = snap
         .uptime
-        .map(|u| vec![Span::styled("up ", t.muted()), Span::raw(format::uptime(u))])
+        .map(|u| {
+            vec![
+                Span::styled("açık ", t.muted()),
+                Span::raw(format::uptime(u)),
+            ]
+        })
         .unwrap_or_default();
-    let model = snap.cpu_model.as_deref().unwrap_or("Unknown CPU");
+    let model = snap.cpu_model.as_deref().unwrap_or("Bilinmeyen işlemci");
     let model = truncate(model, w.saturating_sub(width(&up) + 2));
     let line1 = spread(vec![Span::styled(model, t.bold())], up, w);
 
@@ -139,19 +144,19 @@ fn draw_header(frame: &mut Frame, area: Rect, snap: &Snapshot, view: &View, vpad
             right(&format::percent(u), 4),
             t.usage(u).patch(t.bold()),
         )),
-        None if snap.measuring() => left.push(Span::styled("measuring…", t.muted())),
+        None if snap.measuring() => left.push(Span::styled("ölçülüyor…", t.muted())),
         None => left.push(Span::styled("   —", t.muted())),
     }
     left.push(Span::raw("    "));
     match snap.packages.as_slice() {
-        [] => left.push(Span::styled("Package —", t.muted())),
+        [] => left.push(Span::styled("Paket —", t.muted())),
         [(_, r)] => left.extend([
-            Span::styled("Package ", t.muted()),
+            Span::styled("Paket ", t.muted()),
             Span::styled(format::celsius(Some(r.celsius)), t.heat(r).patch(t.bold())),
         ]),
         many => {
             for (id, r) in many {
-                left.push(Span::styled(format!("Pkg {id} "), t.muted()));
+                left.push(Span::styled(format!("Paket {id} "), t.muted()));
                 left.push(Span::styled(format::celsius(Some(r.celsius)), t.heat(r)));
                 left.push(Span::raw("  "));
             }
@@ -171,18 +176,19 @@ fn draw_header(frame: &mut Frame, area: Rect, snap: &Snapshot, view: &View, vpad
 
 // ── Cores ───────────────────────────────────────────────────────────────
 
-/// `6 cores · 12 threads`, or `6P + 8E cores · 20 threads` on hybrids.
+/// `6 çekirdek · 12 iş parçacığı`, or `6P + 8E çekirdek · 20 iş parçacığı`
+/// on hybrids. Turkish nouns stay singular after a number.
 fn cores_summary(snap: &Snapshot, t: &Theme) -> Line<'static> {
     let threads = snap.cores.len();
     let cores = if snap.hybrid {
         let p = snap.physical_cores(Some(CoreKind::Performance));
         let e = snap.physical_cores(Some(CoreKind::Efficiency));
-        format!("{p}P + {e}E cores")
+        format!("{p}P + {e}E çekirdek")
     } else {
         let n = snap.physical_cores(None);
-        format!("{n} core{}", if n == 1 { "" } else { "s" })
+        format!("{n} çekirdek")
     };
-    Line::styled(format!(" {cores} · {threads} threads "), t.muted())
+    Line::styled(format!(" {cores} · {threads} iş parçacığı "), t.muted())
 }
 
 struct Group<'a> {
@@ -258,7 +264,7 @@ fn choose_columns(groups: &[Group], total: usize, w: usize, height: usize) -> us
 
 fn core_lines(snap: &Snapshot, t: &Theme, w: usize, height: usize) -> Vec<Line<'static>> {
     if snap.cores.is_empty() {
-        return vec![Line::styled("CPU usage unavailable", t.muted())];
+        return vec![Line::styled("CPU kullanımı okunamadı", t.muted())];
     }
     let groups = groups(snap);
     let cols = choose_columns(&groups, snap.cores.len(), w, height);
@@ -311,7 +317,7 @@ fn core_lines(snap: &Snapshot, t: &Theme, w: usize, height: usize) -> Vec<Line<'
         }
     }
     if hidden > 0 {
-        let note = format!("+{hidden} more — enlarge the terminal to see all cores");
+        let note = format!("+{hidden} çekirdek daha — hepsini görmek için terminali büyütün");
         lines.push(Line::styled(truncate(&note, w), t.muted()));
     }
     lines
@@ -319,9 +325,9 @@ fn core_lines(snap: &Snapshot, t: &Theme, w: usize, height: usize) -> Vec<Line<'
 
 fn group_heading(kind: CoreKind, rows: &[&CoreRow], t: &Theme) -> Line<'static> {
     let name = match kind {
-        CoreKind::Performance => "P  Performance",
-        CoreKind::Efficiency => "E  Efficiency",
-        CoreKind::Uniform => "Other",
+        CoreKind::Performance => "P  Performans",
+        CoreKind::Efficiency => "E  Verimlilik",
+        CoreKind::Uniform => "Diğer",
     };
     let physical = rows
         .iter()
@@ -330,13 +336,13 @@ fn group_heading(kind: CoreKind, rows: &[&CoreRow], t: &Theme) -> Line<'static> 
     Line::from(vec![
         Span::styled(name, t.kind(kind)),
         Span::styled(
-            format!("   {physical} cores · {} threads", rows.len()),
+            format!("   {physical} çekirdek · {} iş parçacığı", rows.len()),
             t.muted(),
         ),
     ])
 }
 
-/// `cpu0 ╭ ███████▍······  42%  51°C`, exactly `col_w` columns wide.
+/// `cpu0 ╭ ███████▍······  %42  51°C`, exactly `col_w` columns wide.
 fn core_cell(row: &CoreRow, t: &Theme, col_w: usize, label_w: usize) -> Vec<Span<'static>> {
     // label, " ╭ ", [bar], space, pct(4), 2 spaces, temp(5)
     let fixed = label_w + 3 + 1 + 4 + 2 + 5;
@@ -395,31 +401,31 @@ const MEM_VALUE_W: usize = 21;
 fn draw_memory(frame: &mut Frame, area: Rect, snap: &Snapshot, t: &Theme, vpad: u16) {
     let w = area.width.saturating_sub(2 + 2 * H_PAD) as usize;
     let legend = if t.mono() {
-        Line::from(" █ used  ░ cache ")
+        Line::from(" █ kullanılan  ░ önbellek ")
     } else {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("█", t.fg(theme::USAGE[0].1)),
-            Span::styled(" used  ", t.muted()),
+            Span::styled(" kullanılan  ", t.muted()),
             Span::styled("█", t.fg(theme::CACHE)),
-            Span::styled(" cache ", t.muted()),
+            Span::styled(" önbellek ", t.muted()),
         ])
     };
     let note = |s: &'static str| vec![Span::styled(s, t.muted())];
     let lines = match snap.mem {
         None => vec![
-            mem_label("RAM", t, note("unavailable")),
-            mem_label("Swap", t, note("unavailable")),
+            mem_label("RAM", t, note("okunamadı")),
+            mem_label("Swap", t, note("okunamadı")),
         ],
         Some(m) => vec![
             mem_row("RAM", m.used(), m.cache_shown(), m.total, t, w),
             match m.swap() {
                 Some((used, total)) => mem_row("Swap", used, 0, total, t, w),
-                None => mem_label("Swap", t, note("no swap")),
+                None => mem_label("Swap", t, note("swap yok")),
             },
         ],
     };
-    let block = card(t, "Memory", vpad).title_top(legend.right_aligned());
+    let block = card(t, "Bellek", vpad).title_top(legend.right_aligned());
     frame.render_widget(Paragraph::new(lines).block(block), area);
 }
 
@@ -429,7 +435,7 @@ fn mem_label(name: &str, t: &Theme, rest: Vec<Span<'static>>) -> Line<'static> {
     Line::from(spans)
 }
 
-/// `RAM   ██████▊░░░░····  6.4 GiB / 15.3 GiB   42%`
+/// `RAM   ██████▊░░░░····  6,4 GiB / 15,3 GiB   %42`
 fn mem_row(name: &str, used: u64, cache: u64, total: u64, t: &Theme, w: usize) -> Line<'static> {
     let frac = ratio(used, total);
     let bar_w = w
@@ -468,12 +474,12 @@ fn draw_footer(frame: &mut Frame, area: Rect, view: &View) {
     let left = vec![
         Span::raw("  "),
         Span::styled("q", key),
-        Span::styled(" quit    ", t.muted()),
+        Span::styled(" çıkış    ", t.muted()),
         Span::styled("+/-", key),
-        Span::styled(" interval", t.muted()),
+        Span::styled(" aralık", t.muted()),
     ];
     let right = vec![
-        Span::styled("every ", t.muted()),
+        Span::styled("her ", t.muted()),
         Span::styled(format::interval(view.interval), t.accent()),
         Span::raw("  "),
     ];
@@ -485,10 +491,10 @@ fn draw_footer(frame: &mut Frame, area: Rect, view: &View) {
 
 fn draw_too_small(frame: &mut Frame, area: Rect, t: &Theme) {
     let lines = vec![
-        Line::styled("Terminal too small", t.bold()),
+        Line::styled("Terminal çok küçük", t.bold()),
         Line::styled(
             format!(
-                "{}×{} · need at least {MIN_WIDTH}×{MIN_HEIGHT}",
+                "{}×{} · en az {MIN_WIDTH}×{MIN_HEIGHT} gerekli",
                 area.width, area.height
             ),
             t.muted(),
@@ -550,7 +556,7 @@ pub(crate) mod tests {
     #[test]
     fn too_small() {
         let s = render(&Snapshot::default(), 30, 8);
-        assert!(s.contains("Terminal too small"), "{s}");
+        assert!(s.contains("Terminal çok küçük"), "{s}");
         // Degenerate sizes must not panic.
         for (w, h) in [(0, 0), (1, 1), (MIN_WIDTH, MIN_HEIGHT)] {
             render(&Snapshot::default(), w, h);
@@ -563,13 +569,13 @@ pub(crate) mod tests {
         let out = render(&measured(&fs, 8, 0.25), 80, 24);
         println!("{out}");
         assert!(out.contains("Intel Core i7-7700"));
-        assert!(out.contains("4 cores · 8 threads"));
+        assert!(out.contains("4 çekirdek · 8 iş parçacığı"));
         assert!(out.contains("cpu0 ╭"));
         assert!(out.contains("cpu4 ╰"));
-        assert!(out.contains("25%"));
+        assert!(out.contains("%25"));
         assert!(out.contains("RAM"));
-        assert!(out.contains("q quit"));
-        assert!(out.contains("every 1s"));
+        assert!(out.contains("q çıkış"));
+        assert!(out.contains("her 1 sn"));
     }
 
     #[test]
@@ -578,9 +584,9 @@ pub(crate) mod tests {
         let snap = measured(&fs, 20, 0.6);
         let wide = render(&snap, 120, 30);
         println!("{wide}");
-        assert!(wide.contains("6P + 8E cores · 20 threads"));
-        assert!(wide.contains("P  Performance"));
-        assert!(wide.contains("E  Efficiency"));
+        assert!(wide.contains("6P + 8E çekirdek · 20 iş parçacığı"));
+        assert!(wide.contains("P  Performans"));
+        assert!(wide.contains("E  Verimlilik"));
         // 20 threads ≥ 16: two columns side by side, P-cores split 6 + 6.
         let line = wide.lines().find(|l| l.contains("cpu0 ")).unwrap();
         assert!(line.contains("cpu6 "), "{line}");
@@ -613,7 +619,7 @@ pub(crate) mod tests {
         println!("{out}");
         // 13 core lines: 12 rows × 2 columns (cpu0–11, cpu12–23) plus the
         // note; the rest is a contiguous hidden tail.
-        assert!(out.contains("+104 more — enlarge"), "{out}");
+        assert!(out.contains("+104 çekirdek daha — hepsini"), "{out}");
         let first = out.lines().find(|l| l.contains("cpu0 ")).unwrap();
         assert!(first.contains("cpu12 "), "{first}");
         assert!(!out.contains("cpu24 "));
@@ -624,11 +630,11 @@ pub(crate) mod tests {
     fn vm_and_no_swap() {
         let vm = render(&Collector::new(&fixtures::vm()).collect(), 80, 24);
         println!("{vm}");
-        assert!(vm.contains("measuring…"));
-        assert!(vm.contains("Package —"));
+        assert!(vm.contains("ölçülüyor…"));
+        assert!(vm.contains("Paket —"));
         assert!(vm.contains("QEMU Virtual CPU"));
         let ns = render(&Collector::new(&fixtures::no_swap()).collect(), 80, 24);
-        assert!(ns.contains("no swap"), "{ns}");
+        assert!(ns.contains("swap yok"), "{ns}");
     }
 
     #[test]
