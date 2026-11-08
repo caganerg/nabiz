@@ -11,9 +11,6 @@ and nothing else:
 There is no process list. It is a dashboard you can read at a glance, not an
 htop replacement.
 
-<!-- Screenshot placeholder: replace with a real capture, e.g. docs/screenshot.png -->
-![ctop screenshot](docs/screenshot.png)
-
 Text capture from an i5-8500T with two busy cores (colors not shown):
 
 ```
@@ -216,3 +213,7 @@ crossterm 0.29 that `ctop` uses directly, so only one copy is compiled.
   Keyboard exits and panics are covered.
 - Temperatures are Intel `coretemp` only, by design. Other hwmon drivers
   (`k10temp`, `acpitz`, …) are ignored.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -46,8 +46,8 @@ ctop — per-core CPU usage, Intel core temperatures, RAM and swap
 Usage: ctop [--once]
 
 Options:
-  --once      Print one plain-text snapshot to stdout and exit
-  -h, --help  Show this help
+  --once         Print one plain-text snapshot to stdout and exit
+  -h, --help     Show this help
   -V, --version  Show version
 ";
 
