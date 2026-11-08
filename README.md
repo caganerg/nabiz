@@ -1,17 +1,18 @@
 # nabiz
 
-A minimal, calm terminal monitor for Linux on Intel CPUs. It shows four things
-and nothing else:
+Intel işlemcili Linux makineler için sade, sakin bir terminal monitörü. Dört
+şey gösterir, başka bir şey göstermez:
 
-- per-core CPU usage
-- each core's temperature, right next to its usage
-- RAM usage (with page cache as a lighter segment)
-- swap usage
+- çekirdek başına CPU kullanımı
+- her çekirdeğin sıcaklığı, kullanımının hemen yanında
+- RAM kullanımı (sayfa önbelleği daha açık renkli ayrı bir parça olarak)
+- swap kullanımı
 
-There is no process list. It is a dashboard you can read at a glance, not an
-htop replacement.
+Süreç listesi yoktur. Tek bakışta okunacak bir gösterge paneli olarak
+tasarlandı, htop'un yerine geçmek için değil.
 
-Text capture from an i5-8500T with two busy cores (colors not shown):
+İki çekirdeği yoğun çalışan bir i5-8500T'nin metin çıktısı (renkler
+görünmüyor):
 
 ```
 ╭ nabiz ───────────────────────────────────────────────────────────────────────────────────╮
@@ -34,9 +35,10 @@ Text capture from an i5-8500T with two busy cores (colors not shown):
   q quit    +/- interval                                                          every 1s
 ```
 
-With Hyper-Threading, sibling threads are drawn as a bracketed pair. On hybrid
-CPUs (Alder Lake and newer), P-cores and E-cores get their own groups. This is
-the test render of the 12700H fixture at 120 columns, with every core 60 % busy:
+Hyper-Threading açıksa kardeş thread'ler köşeli bir parantezle çift olarak
+çizilir. Hibrit işlemcilerde (Alder Lake ve sonrası) P-çekirdekler ve
+E-çekirdekler ayrı gruplarda gösterilir. Aşağıdaki görüntü, testlerdeki 12700H
+fikstürünün 120 sütunda, her çekirdek %60 yükteyken çizilmiş hâli:
 
 ```
 ╭ Cores ─────────────────────────────────────────────────────────────────────────────────── 6P + 8E cores · 20 threads ╮
@@ -56,43 +58,44 @@ the test render of the 12700H fixture at 120 columns, with every core 60 % busy:
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-## Build and run
+## Derleme ve çalıştırma
 
-You need a stable Rust toolchain, 1.88 or newer.
+1.88 veya daha yeni bir kararlı (stable) Rust araç zinciri gerekir.
 
 ```sh
 cargo build --release
 ./target/release/nabiz
 ```
 
-Or install it into `~/.cargo/bin`:
+Ya da `~/.cargo/bin` altına kurmak için:
 
 ```sh
 cargo install --path .
 ```
 
-It runs as a normal user. Root is never needed.
+Normal kullanıcıyla çalışır, root yetkisi hiçbir zaman gerekmez.
 
-| Key                  | Action                                         |
+| Tuş                  | İşlev                                          |
 |----------------------|------------------------------------------------|
-| `q`, `Esc`, `Ctrl-C` | quit                                           |
-| `+` (or `=`)         | longer refresh interval                        |
-| `-`                  | shorter refresh interval                       |
+| `q`, `Esc`, `Ctrl-C` | çıkış                                          |
+| `+` (veya `=`)       | yenileme aralığını uzat                        |
+| `-`                  | yenileme aralığını kısalt                      |
 
-The interval steps through 250 ms, 500 ms, 750 ms, 1 s (the default), 1.5 s, 2 s,
-3 s, 4 s and 5 s. The current value is shown in the footer.
+Aralık şu adımlarla değişir: 250 ms, 500 ms, 750 ms, 1 sn (varsayılan), 1,5 sn,
+2 sn, 3 sn, 4 sn ve 5 sn. Geçerli değer alt satırda gösterilir.
 
-### Options and environment
+### Seçenekler ve ortam değişkenleri
 
-- `nabiz --once` prints one plain-text snapshot to stdout and exits. It takes two
-  samples 0.5 s apart, so the usage figures are real. Useful for scripts and for
-  checking what the data layer sees.
-- `NO_COLOR=1 nabiz` turns off all color. Bars and text stay; the cache segment
-  is drawn as `░` so it can still be told apart from used memory.
-- `COLORTERM=truecolor` (or `24bit`) enables 24-bit color. Without it, colors
-  are mapped to the nearest xterm-256 entry.
+- `nabiz --once` tek bir düz metin anlık görüntüsünü stdout'a yazıp çıkar.
+  Arada 0,5 sn olan iki örnek alır, yani kullanım değerleri gerçek ölçümdür.
+  Betiklerde kullanmak ve veri katmanının ne gördüğünü kontrol etmek için
+  işe yarar.
+- `NO_COLOR=1 nabiz` bütün renkleri kapatır. Çubuklar ve metin yerinde kalır;
+  önbellek parçası kullanılan bellekten ayırt edilebilsin diye `░` ile çizilir.
+- `COLORTERM=truecolor` (veya `24bit`) 24 bit rengi açar. Bu değişken yoksa
+  renkler en yakın xterm-256 rengine eşlenir.
 
-## Tests
+## Testler
 
 ```sh
 cargo test
@@ -100,120 +103,128 @@ cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 ```
 
-All tests run on string fixtures held in an in-memory filesystem. They never
-read the live `/proc` or `/sys`, so they pass without root, without Intel
-hardware, and inside containers. The fixtures describe whole machines:
+Bütün testler bellek içi bir dosya sisteminde tutulan metin fikstürleri
+üzerinde çalışır. Gerçek `/proc` veya `/sys` hiç okunmaz; bu yüzden testler
+root olmadan, Intel donanımı olmadan ve container içinde de geçer. Fikstürler
+makinelerin tamamını tarif eder:
 
-- a quad-core i7 with HT
-- a hybrid i7-12700H (6P + 8E)
-- a KVM guest with no hwmon, where one CPU is missing its topology files
-- a laptop with no swap
-- a dual-socket box where both packages have a `Core 0`
+- HT'li dört çekirdekli bir i7
+- hibrit bir i7-12700H (6P + 8E)
+- hwmon'u olmayan ve bir CPU'sunun topoloji dosyaları eksik olan bir KVM
+  sanal makinesi
+- swap'ı olmayan bir dizüstü
+- iki paketinde de `Core 0` bulunan çift soketli bir makine
 
-UI tests render into ratatui's `TestBackend` and check the layout, column flow,
-HT pairing, the overflow note, the "too small" screen, and that `NO_COLOR` leaves
-every cell uncolored.
+Arayüz testleri ratatui'nin `TestBackend`'ine çizer ve şunları kontrol eder:
+yerleşim, sütunlara dağılım, HT eşleştirmesi, taşma notu, "terminal çok küçük"
+ekranı ve `NO_COLOR` açıkken hiçbir hücrenin renklenmemesi.
 
-## Design notes
+## Tasarım notları
 
-### Data sources
+### Veri kaynakları
 
-Every value comes from plain text files, read with `std::fs`.
+Bütün değerler düz metin dosyalarından `std::fs` ile okunur.
 
-| Module        | Source                                    | Notes |
-|---------------|-------------------------------------------|-------|
-| `cpu.rs`      | `/proc/stat`, `/proc/cpuinfo`             | busy = user+nice+system+irq+softirq+steal, idle = idle+iowait; usage = Δbusy / (Δbusy+Δidle). CPUs are keyed by number, so a CPU going offline never shifts the others. |
-| `temp.rs`     | `/sys/class/hwmon/hwmon*/`                | Finds `coretemp` by the `name` file, never by hwmon number. `Package id X` and `Core N` labels; `temp*_max` / `temp*_crit` give the thresholds. |
-| `topology.rs` | `/sys/devices/system/cpu/cpuN/topology/`, `/sys/devices/cpu_{core,atom}/cpus` | `core_id` and `physical_package_id`; P/E detection; CPU range-list parser (`0-3,8,10-11`). |
-| `mem.rs`      | `/proc/meminfo`                           | used = MemTotal − MemAvailable; cache = Buffers + Cached + SReclaimable − Shmem; swap used = SwapTotal − SwapFree. |
-| `collect.rs`  | `/proc/uptime`                            | Combines everything into a plain `Snapshot`. |
+| Modül         | Kaynak                                    | Notlar |
+|---------------|-------------------------------------------|--------|
+| `cpu.rs`      | `/proc/stat`, `/proc/cpuinfo`             | meşgul = user+nice+system+irq+softirq+steal, boşta = idle+iowait; kullanım = Δmeşgul / (Δmeşgul+Δboşta). CPU'lar numaralarıyla tutulur, bu yüzden bir CPU'nun çevrimdışı olması diğerlerini kaydırmaz. |
+| `temp.rs`     | `/sys/class/hwmon/hwmon*/`                | `coretemp`'i hwmon numarasıyla değil, `name` dosyasıyla bulur. `Package id X` ve `Core N` etiketlerini okur; eşikler `temp*_max` / `temp*_crit` dosyalarından gelir. |
+| `topology.rs` | `/sys/devices/system/cpu/cpuN/topology/`, `/sys/devices/cpu_{core,atom}/cpus` | `core_id` ve `physical_package_id`; P/E tespiti; CPU aralık listesi ayrıştırıcısı (`0-3,8,10-11`). |
+| `mem.rs`      | `/proc/meminfo`                           | kullanılan = MemTotal − MemAvailable; önbellek = Buffers + Cached + SReclaimable − Shmem; kullanılan swap = SwapTotal − SwapFree. |
+| `collect.rs`  | `/proc/uptime`                            | Hepsini düz bir `Snapshot` yapısında birleştirir. |
 
-`sysfs.rs` holds the small `Fs` trait (read a file, list a directory). The
-collectors read through it, which is what lets the tests use in-memory
-fixtures.
+`sysfs.rs` küçük `Fs` trait'ini içerir (dosya okuma, dizin listeleme).
+Toplayıcılar dosyaları bunun üzerinden okur; testlerin bellek içi fikstür
+kullanabilmesini sağlayan da budur.
 
-### Mapping a logical CPU to its temperature
+### Mantıksal CPU'yu sıcaklığına eşlemek
 
-`coretemp` reports one temperature per physical core, labelled by `core_id`, not
-by logical CPU number. On a 12700H, for example, cpu2 is `Core 4` and E-core
-cpu19 is `Core 31`. Each logical CPU is therefore resolved through
-`topology/core_id` and `physical_package_id` to the key `(package, core)`.
-Hyper-Threading siblings share that key, so they share a reading. On multi-socket
-machines, each coretemp instance's `Package id` label says which package its
-cores belong to.
+`coretemp`, mantıksal CPU numarasına göre değil, `core_id` ile etiketlenmiş
+olarak her fiziksel çekirdek için bir sıcaklık bildirir. Örneğin bir 12700H'de
+cpu2 `Core 4`, E-çekirdek cpu19 ise `Core 31`'dir. Bu yüzden her mantıksal CPU,
+`topology/core_id` ve `physical_package_id` üzerinden `(paket, çekirdek)`
+anahtarına çözülür. Hyper-Threading kardeşleri aynı anahtarı, dolayısıyla aynı
+okumayı paylaşır. Çok soketli makinelerde her coretemp örneğinin `Package id`
+etiketi, çekirdeklerinin hangi pakete ait olduğunu söyler.
 
-If there is no coretemp (an AMD CPU, a VM, or the module not loaded), usage,
-memory and swap still work, and temperatures show `—`.
+coretemp yoksa (AMD işlemci, sanal makine ya da modül yüklenmemiş) kullanım,
+bellek ve swap yine çalışır; sıcaklıklar `—` olarak gösterilir.
 
-### Colors relative to the chip's own limits
+### Renkler, çipin kendi sınırlarına göre
 
-Temperature color is not tied to fixed numbers. Each reading carries its
-sensor's `high` (`temp*_max`) and `crit` (TjMax, `temp*_crit`). The scale runs
-from cool at 40 % of TjMax to hot at `high`. Readings at or above `crit` are also
-shown in bold. If the files are missing, TjMax falls back to 100 °C and `high`
-to TjMax − 10.
+Sıcaklık rengi sabit sayılara bağlı değildir. Her okuma, sensörünün `high`
+(`temp*_max`) ve `crit` (TjMax, `temp*_crit`) değerlerini taşır. Ölçek,
+TjMax'ın %40'ında serin başlar ve `high` değerinde sıcağa ulaşır. `crit` ve
+üstündeki okumalar ayrıca kalın yazılır. Bu dosyalar yoksa TjMax için 100 °C,
+`high` için TjMax − 10 kullanılır.
 
-Usage bars use a green → yellow → orange → red gradient. Each cell is colored by
-its position along the bar, so a full bar shows the whole scale, and a mostly
-idle core stays calm green.
+Kullanım çubukları yeşil → sarı → turuncu → kırmızı bir geçiş kullanır. Her
+hücre çubuk üzerindeki konumuna göre renklenir; böylece dolu bir çubuk bütün
+ölçeği gösterir, çoğunlukla boşta duran bir çekirdek ise sakin bir yeşilde
+kalır.
 
-The palette is muted (Nord-like), so the screen stays quiet and the numbers
-stand out.
+Palet yumuşak tonlardadır (Nord benzeri); ekran sakin kalır, sayılar öne çıkar.
 
-### Bars and layout
+### Çubuklar ve yerleşim
 
-- Bars use the eighth blocks `▏▎▍▌▋▊▉█`, which gives 1/8-cell precision. In
-  stacked bars (RAM used + cache), the boundary cell uses the next segment's
-  color as its background, so the edge stays smooth.
-- Cards are only as tall as their content, and on machines with fewer than 16
-  logical CPUs the dashboard is capped at 120 columns and centered.
-- Cores flow into columns column-major. With 16 or more logical CPUs there are
-  at least two columns. More are added only when the rows wouldn't fit the
-  height, and no column is narrower than 34 cells. Column breaks always fall
-  between physical cores, so an HT pair is never split.
-- If even the widest layout can't show every core, the visible ones are a
-  contiguous run and a note says how many are hidden. Below 50×12, a friendly
-  "terminal too small" message replaces the layout.
+- Çubuklar `▏▎▍▌▋▊▉█` sekizlik bloklarını kullanır, bu da hücrenin 1/8'i kadar
+  hassasiyet verir. Üst üste binen çubuklarda (RAM kullanılan + önbellek), sınır
+  hücresi arka plan olarak bir sonraki parçanın rengini alır; böylece kenar
+  pürüzsüz kalır.
+- Kartlar yalnızca içerikleri kadar uzundur. 16'dan az mantıksal CPU'su olan
+  makinelerde gösterge paneli en fazla 120 sütun genişliğindedir ve ortalanır.
+- Çekirdekler sütunlara önce yukarıdan aşağı, sonra soldan sağa dağılır. 16 veya
+  daha fazla mantıksal CPU varsa en az iki sütun olur. Daha fazla sütun yalnızca
+  satırlar yüksekliğe sığmadığında eklenir ve hiçbir sütun 34 hücreden dar
+  olmaz. Sütun geçişleri her zaman fiziksel çekirdeklerin arasına düşer, yani
+  bir HT çifti asla bölünmez.
+- En geniş yerleşim bile bütün çekirdekleri gösteremiyorsa, görünenler kesintisiz
+  bir aralık olur ve kaç tanesinin gizlendiğini söyleyen bir not çıkar. 50×12'nin
+  altında, yerleşimin yerine "terminal çok küçük" mesajı gösterilir.
 
-### Runtime behaviour
+### Çalışma zamanı davranışı
 
-- The loop blocks in `crossterm::event::poll` until a key, a resize, or the next
-  tick, so there is no busy loop. Coretemp discovery runs once at startup, and
-  each tick re-reads only `temp*_input`. Topology is re-read only when the set
-  of online CPUs changes. Measured overhead is about 0.3 % of one core at the
-  1 s default (27 ms of CPU time over 10 s), and about 1 % at 250 ms.
-- The first frame says "measuring…" instead of showing a fake 0 %. The second
-  sample is taken after 250 ms, so real numbers appear almost at once.
-- The terminal is restored (raw mode off, alternate screen left, cursor shown)
-  in three cases: by a drop guard on normal exit and on `?` errors, and by a
-  panic hook. The hook restores the terminal *before* printing the panic
-  message, so the message stays visible.
+- Döngü bir tuşa, yeniden boyutlandırmaya ya da bir sonraki tike kadar
+  `crossterm::event::poll` içinde bekler; meşgul bekleme yoktur. coretemp keşfi
+  başlangıçta bir kez yapılır, her tikte yalnızca `temp*_input` yeniden okunur.
+  Topoloji yalnızca çevrimiçi CPU kümesi değiştiğinde yeniden okunur. Ölçülen
+  yük, varsayılan 1 sn aralıkta bir çekirdeğin yaklaşık %0,3'ü (10 sn'de 27 ms
+  CPU zamanı), 250 ms'de ise yaklaşık %1'idir.
+- İlk kare sahte bir %0 yerine "measuring…" yazar. İkinci örnek 250 ms sonra
+  alınır, böylece gerçek sayılar neredeyse hemen gelir.
+- Terminal üç durumda eski hâline getirilir (raw mod kapatılır, alternatif
+  ekrandan çıkılır, imleç gösterilir): normal çıkışta ve `?` hatalarında bir
+  drop guard ile, panikte ise bir panic hook ile. Hook, terminali panik mesajını
+  yazdırmadan *önce* düzeltir, bu sayede mesaj görünür kalır.
 
-### Safety and robustness
+### Güvenlik ve sağlamlık
 
-- The crate root has `#![forbid(unsafe_code)]`. There is no FFI and no `libc` of
-  our own.
-- There is no `unwrap()` / `expect()` on runtime data. A missing or malformed
-  file makes that one field "unavailable" or `—`; it never stops the program.
-  For example, an unreadable `/proc/meminfo` shows "unavailable" in the memory
-  card, and one unreadable sensor drops only that core's temperature.
+- Crate kökünde `#![forbid(unsafe_code)]` vardır. FFI yoktur, kendi `libc`
+  çağrılarımız da yoktur.
+- Çalışma zamanı verisi üzerinde `unwrap()` / `expect()` yoktur. Eksik ya da
+  bozuk bir dosya yalnızca ilgili alanı "unavailable" ya da `—` yapar; programı
+  asla durdurmaz. Örneğin okunamayan bir `/proc/meminfo` bellek kartında
+  "unavailable" gösterir, okunamayan tek bir sensör ise yalnızca o çekirdeğin
+  sıcaklığını düşürür.
 
-### Dependencies
+### Bağımlılıklar
 
-Only `ratatui` and `crossterm`, nothing else. `ratatui` is built with
-`default-features = false` and only the `crossterm_0_29` backend feature, which
-drops the macros, the layout cache and extra widgets. It is pinned to the same
-crossterm 0.29 that `nabiz` uses directly, so only one copy is compiled.
+Yalnızca `ratatui` ve `crossterm`, başka hiçbir şey. `ratatui`,
+`default-features = false` ile ve yalnızca `crossterm_0_29` arka uç özelliğiyle
+derlenir; bu da makroları, yerleşim önbelleğini ve fazladan widget'ları dışarıda
+bırakır. `nabiz`'in doğrudan kullandığı crossterm 0.29 sürümüne sabitlenmiştir,
+böylece yalnızca tek bir kopya derlenir.
 
-## Limitations
+## Sınırlamalar
 
-- `SIGTERM` / `SIGHUP` end the process without the cleanup above, so if nabiz is
-  killed from outside, run `reset`. Catching signals would need `libc` or a crate
-  such as `signal-hook`, which the no-FFI, minimal-dependency rules exclude.
-  Keyboard exits and panics are covered.
-- Temperatures are Intel `coretemp` only, by design. Other hwmon drivers
-  (`k10temp`, `acpitz`, …) are ignored.
+- `SIGTERM` / `SIGHUP` süreci yukarıdaki temizlik yapılmadan sonlandırır; nabiz
+  dışarıdan öldürülürse `reset` çalıştırın. Sinyalleri yakalamak `libc` ya da
+  `signal-hook` gibi bir crate gerektirirdi; bunlar FFI'sız ve az bağımlılıklı
+  olma kurallarının dışında kalıyor. Klavyeden çıkışlar ve panikler
+  kapsanmıştır.
+- Sıcaklıklar bilerek yalnızca Intel `coretemp`'ten okunur. Diğer hwmon
+  sürücüleri (`k10temp`, `acpitz`, …) yok sayılır.
 
-## License
+## Lisans
 
-MIT. See [LICENSE](LICENSE).
+MIT. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.
