@@ -1,0 +1,18 @@
+[package]
+name = "ctop"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "A minimal, calm terminal monitor for per-core CPU usage, Intel core temperatures, RAM and swap"
+readme = "README.md"
+publish = false
+
+[dependencies]
+# Only the crossterm backend; no default widgets/macros/layout-cache we don't use.
+ratatui = { version = "0.30", default-features = false, features = ["crossterm_0_29"] }
+crossterm = "0.29"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
