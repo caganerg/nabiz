@@ -1,4 +1,4 @@
-# ctop
+# nabiz
 
 A minimal, calm terminal monitor for Linux on Intel CPUs. It shows four things
 and nothing else:
@@ -14,7 +14,7 @@ htop replacement.
 Text capture from an i5-8500T with two busy cores (colors not shown):
 
 ```
-╭ ctop ────────────────────────────────────────────────────────────────────────────────────╮
+╭ nabiz ───────────────────────────────────────────────────────────────────────────────────╮
 │  Intel Core i5-8500T @ 2.10GHz                                                up 5h 42m  │
 │  CPU  34%    Package 61°C                                                           ▃▄▃  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
@@ -62,7 +62,7 @@ You need a stable Rust toolchain, 1.88 or newer.
 
 ```sh
 cargo build --release
-./target/release/ctop
+./target/release/nabiz
 ```
 
 Or install it into `~/.cargo/bin`:
@@ -84,10 +84,10 @@ The interval steps through 250 ms, 500 ms, 750 ms, 1 s (the default), 1.5 s, 2 s
 
 ### Options and environment
 
-- `ctop --once` prints one plain-text snapshot to stdout and exits. It takes two
+- `nabiz --once` prints one plain-text snapshot to stdout and exits. It takes two
   samples 0.5 s apart, so the usage figures are real. Useful for scripts and for
   checking what the data layer sees.
-- `NO_COLOR=1 ctop` turns off all color. Bars and text stay; the cache segment
+- `NO_COLOR=1 nabiz` turns off all color. Bars and text stay; the cache segment
   is drawn as `░` so it can still be told apart from used memory.
 - `COLORTERM=truecolor` (or `24bit`) enables 24-bit color. Without it, colors
   are mapped to the nearest xterm-256 entry.
@@ -203,11 +203,11 @@ stand out.
 Only `ratatui` and `crossterm`, nothing else. `ratatui` is built with
 `default-features = false` and only the `crossterm_0_29` backend feature, which
 drops the macros, the layout cache and extra widgets. It is pinned to the same
-crossterm 0.29 that `ctop` uses directly, so only one copy is compiled.
+crossterm 0.29 that `nabiz` uses directly, so only one copy is compiled.
 
 ## Limitations
 
-- `SIGTERM` / `SIGHUP` end the process without the cleanup above, so if ctop is
+- `SIGTERM` / `SIGHUP` end the process without the cleanup above, so if nabiz is
   killed from outside, run `reset`. Catching signals would need `libc` or a crate
   such as `signal-hook`, which the no-FFI, minimal-dependency rules exclude.
   Keyboard exits and panics are covered.

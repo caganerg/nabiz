@@ -1,12 +1,12 @@
 [package]
-name = "ctop"
+name = "nabiz"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
 description = "A minimal, calm terminal monitor for per-core CPU usage, Intel core temperatures, RAM and swap"
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/caganerg/ctop"
+repository = "https://github.com/caganerg/nabiz"
 publish = false
 
 [dependencies]

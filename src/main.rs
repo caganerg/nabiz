@@ -1,4 +1,4 @@
-//! ctop — a minimal, calm terminal monitor for per-core CPU usage, Intel
+//! nabiz — a minimal, calm terminal monitor for per-core CPU usage, Intel
 //! core temperatures, RAM and swap.
 
 #![forbid(unsafe_code)]
@@ -41,9 +41,9 @@ const FIRST_SAMPLE: Duration = Duration::from_millis(250);
 const HISTORY_LEN: usize = 60;
 
 const USAGE: &str = "\
-ctop — per-core CPU usage, Intel core temperatures, RAM and swap
+nabiz — per-core CPU usage, Intel core temperatures, RAM and swap
 
-Usage: ctop [--once]
+Usage: nabiz [--once]
 
 Options:
   --once         Print one plain-text snapshot to stdout and exit
@@ -62,7 +62,7 @@ fn main() -> ExitCode {
         [] => match run_tui() {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
-                eprintln!("ctop: {e}");
+                eprintln!("nabiz: {e}");
                 ExitCode::FAILURE
             }
         },
@@ -75,12 +75,12 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         ["-V" | "--version"] => {
-            println!("ctop {}", env!("CARGO_PKG_VERSION"));
+            println!("nabiz {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
         _ => {
             eprint!(
-                "ctop: unrecognised arguments: {}\n\n{USAGE}",
+                "nabiz: unrecognised arguments: {}\n\n{USAGE}",
                 args.join(" ")
             );
             ExitCode::from(2)

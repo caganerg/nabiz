@@ -165,7 +165,7 @@ fn draw_header(frame: &mut Frame, area: Rect, snap: &Snapshot, view: &View, vpad
     };
     let line2 = spread(left, spark, w);
 
-    let block = card(t, "ctop", vpad);
+    let block = card(t, "nabiz", vpad);
     frame.render_widget(Paragraph::new(vec![line1, line2]).block(block), area);
 }
 

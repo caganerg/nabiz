@@ -101,14 +101,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ctop"
-version = "0.1.0"
-dependencies = [
- "crossterm",
- "ratatui",
-]
-
-[[package]]
 name = "darling"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -345,6 +337,14 @@ dependencies = [
  "log",
  "wasi",
  "windows-sys",
+]
+
+[[package]]
+name = "nabiz"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "ratatui",
 ]
 
 [[package]]
