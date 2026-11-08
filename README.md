@@ -73,6 +73,17 @@ Ya da `~/.cargo/bin` altına kurmak için:
 cargo install --path .
 ```
 
+Debian/Ubuntu paketi olarak derlemek için (`dpkg-dev` paketi gerekir):
+
+```sh
+./scripts/build-deb.sh
+sudo apt install ./target/debian/nabiz_0.1.0-1_amd64.deb
+```
+
+Paketin istediği en düşük glibc sürümü, derlendiği sistemden gelir.
+`dpkg-shlibdeps` bunu binary'den hesaplayıp `Depends` alanına yazar, böylece
+apt uyumsuz bir sisteme kurulumu baştan reddeder.
+
 Normal kullanıcıyla çalışır, root yetkisi hiçbir zaman gerekmez.
 
 | Tuş                  | İşlev                                          |
