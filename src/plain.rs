@@ -82,6 +82,23 @@ fn write_snapshot(out: &mut String, s: &Snapshot) -> std::fmt::Result {
         }
         None => writeln!(out, "RAM        okunamadı\nSwap       okunamadı")?,
     }
+    match s.disks.as_deref() {
+        None => writeln!(out, "Disk       okunamadı")?,
+        Some([]) => writeln!(out, "Disk       disk bulunamadı")?,
+        Some(disks) => {
+            for d in disks {
+                writeln!(
+                    out,
+                    "Disk       {} {} / {} ({}), {}",
+                    d.mount,
+                    format::bytes(d.used),
+                    format::bytes(d.total),
+                    format::percent(d.frac()),
+                    d.device,
+                )?;
+            }
+        }
+    }
     Ok(())
 }
 
@@ -107,6 +124,19 @@ mod tests {
         assert!(text.contains("coretemp yok"));
         assert!(text.contains("Toplam     ölçülüyor…"));
         assert!(text.contains("cpu3"));
+        assert!(text.contains("Disk       okunamadı"), "{text}");
+    }
+
+    #[test]
+    fn renders_disks() {
+        let fs = fixtures::quad_core_ht();
+        let text = render(&Collector::new(&fs).collect());
+        assert!(
+            text.contains("Disk       / 74,0 GiB / 221,0 GiB (%33), /dev/nvme0n1p2"),
+            "{text}"
+        );
+        assert!(text.contains("Disk       /mnt/yedek 412,0 GiB / 931,0 GiB (%44)"));
+        assert!(!text.contains("/boot/efi"));
     }
 
     #[test]

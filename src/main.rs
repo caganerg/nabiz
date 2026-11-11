@@ -1,11 +1,12 @@
 //! nabiz — a minimal, calm terminal monitor for per-core CPU usage, Intel
-//! core temperatures, RAM and swap.
+//! core temperatures, RAM, swap and disk usage.
 
 #![forbid(unsafe_code)]
 
 mod bar;
 mod collect;
 mod cpu;
+mod disk;
 mod error;
 #[cfg(test)]
 mod fixtures;
@@ -41,7 +42,7 @@ const FIRST_SAMPLE: Duration = Duration::from_millis(250);
 const HISTORY_LEN: usize = 60;
 
 const USAGE: &str = "\
-nabiz — çekirdek başına CPU kullanımı, Intel çekirdek sıcaklıkları, RAM ve swap
+nabiz — çekirdek başına CPU kullanımı, Intel çekirdek sıcaklıkları, RAM, swap ve diskler
 
 Kullanım: nabiz [--once]
 

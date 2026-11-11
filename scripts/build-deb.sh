@@ -59,7 +59,7 @@ Priority: optional
 Homepage: https://github.com/caganerg/$name
 Description: Intel işlemciler için sade, sakin bir terminal monitörü
  Çekirdek başına CPU kullanımını, her çekirdeğin sıcaklığını (coretemp),
- RAM ve swap kullanımını tek ekranda gösterir. Süreç listesi yoktur.
+ RAM, swap ve disk kullanımını tek ekranda gösterir. Süreç listesi yoktur.
 EOF
 
 mkdir -p "$(dirname "$out")"

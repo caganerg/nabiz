@@ -1,12 +1,13 @@
 # nabiz
 
-Intel işlemcili Linux makineler için sade, sakin bir terminal monitörü. Dört
+Intel işlemcili Linux makineler için sade, sakin bir terminal monitörü. Beş
 şey gösterir, başka bir şey göstermez:
 
 - çekirdek başına CPU kullanımı
 - her çekirdeğin sıcaklığı, kullanımının hemen yanında
 - RAM kullanımı (sayfa önbelleği daha açık renkli ayrı bir parça olarak)
 - swap kullanımı
+- disklerin doluluğu (yüzde ve GiB olarak, en fazla üç disk)
 
 Süreç listesi yoktur. Tek bakışta okunacak bir gösterge paneli olarak
 tasarlandı, htop'un yerine geçmek için değil.
@@ -28,8 +29,11 @@ görünmüyor):
 │  cpu5   ···································································   %0   46°C  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
 ╭ Bellek ──────────────────────────────────────────────────────── █ kullanılan  █ önbellek ╮
-│  RAM   ███████████████████████████▍███████████████████████▎    8,1 GiB / 15,3 GiB   %53  │
-│  Swap  ····················································    0,0 MiB / 12,3 GiB    %0  │
+│  RAM   ██████████████████████████▉██████████████████████▊      8,1 GiB / 15,3 GiB   %53  │
+│  Swap  ··················································      0,0 MiB / 12,3 GiB    %0  │
+╰──────────────────────────────────────────────────────────────────────────────────────────╯
+╭ Diskler ─────────────────────────────────────────────────────────────────────────────────╮
+│  /     ████████████████▋·································    74,0 GiB / 221,0 GiB   %33  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
 
   q çıkış    +/- aralık                                                         her 1 sn  
@@ -142,9 +146,11 @@ Bütün değerler düz metin dosyalarından `std::fs` ile okunur.
 | `temp.rs`     | `/sys/class/hwmon/hwmon*/`                | `coretemp`'i hwmon numarasıyla değil, `name` dosyasıyla bulur. `Package id X` ve `Core N` etiketlerini okur; eşikler `temp*_max` / `temp*_crit` dosyalarından gelir. |
 | `topology.rs` | `/sys/devices/system/cpu/cpuN/topology/`, `/sys/devices/cpu_{core,atom}/cpus` | `core_id` ve `physical_package_id`; P/E tespiti; CPU aralık listesi ayrıştırıcısı (`0-3,8,10-11`). |
 | `mem.rs`      | `/proc/meminfo`                           | kullanılan = MemTotal − MemAvailable; önbellek = Buffers + Cached + SReclaimable − Shmem; kullanılan swap = SwapTotal − SwapFree. |
+| `disk.rs`     | `/proc/mounts`, `statvfs`                 | `/dev/` altındaki blok aygıtlarına bağlı dosya sistemleri; loop aygıtları, `/boot` altı ve squashfs/iso9660/udf atlanır, aynı aygıt (bind mount, btrfs alt birimi) bir kez sayılır. `/` başta, kalanlar büyükten küçüğe. Doluluk `df` gibi hesaplanır: kullanılan / (kullanılan + kullanılabilir), yani root'a ayrılan alan boş sayılmaz. |
 | `collect.rs`  | `/proc/uptime`                            | Hepsini düz bir `Snapshot` yapısında birleştirir. |
 
-`sysfs.rs` küçük `Fs` trait'ini içerir (dosya okuma, dizin listeleme).
+`sysfs.rs` küçük `Fs` trait'ini içerir (dosya okuma, dizin listeleme ve
+`statvfs` ile dosya sistemi boyutu).
 Toplayıcılar dosyaları bunun üzerinden okur; testlerin bellek içi fikstür
 kullanabilmesini sağlayan da budur.
 
@@ -189,6 +195,10 @@ Palet yumuşak tonlardadır (Nord benzeri); ekran sakin kalır, sayılar öne ç
   satırlar yüksekliğe sığmadığında eklenir ve hiçbir sütun 34 hücreden dar
   olmaz. Sütun geçişleri her zaman fiziksel çekirdeklerin arasına düşer, yani
   bir HT çifti asla bölünmez.
+- Diskler kartı en fazla üç satırdır; daha fazla disk varsa başlıkta
+  `+N disk daha` yazar. Alçak terminallerde çekirdek kartına önce üç satır
+  bırakılır, diskler ondan sonra sığdığı kadar gösterilir; hiç yer kalmazsa
+  kart gizlenir.
 - En geniş yerleşim bile bütün çekirdekleri gösteremiyorsa, görünenler kesintisiz
   bir aralık olur ve kaç tanesinin gizlendiğini söyleyen bir not çıkar. 50×12'nin
   altında, yerleşimin yerine "Terminal çok küçük" mesajı gösterilir.

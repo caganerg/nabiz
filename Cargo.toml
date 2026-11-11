@@ -3,7 +3,7 @@ name = "nabiz"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
-description = "Çekirdek başına CPU kullanımı, Intel çekirdek sıcaklıkları, RAM ve swap için sade, sakin bir terminal monitörü"
+description = "Çekirdek başına CPU kullanımı, Intel çekirdek sıcaklıkları, RAM, swap ve disk doluluğu için sade, sakin bir terminal monitörü"
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/caganerg/nabiz"
@@ -13,6 +13,8 @@ publish = false
 # Only the crossterm backend; no default widgets/macros/layout-cache we don't use.
 ratatui = { version = "0.30", default-features = false, features = ["crossterm_0_29"] }
 crossterm = "0.29"
+# Safe `statvfs` for disk usage (already pulled in by crossterm).
+rustix = { version = "1.1", default-features = false, features = ["std", "fs"] }
 
 [profile.release]
 lto = true

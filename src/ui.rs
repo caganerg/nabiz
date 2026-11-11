@@ -1,7 +1,8 @@
 //! Rendering only: turns a [`Snapshot`] into widgets. No I/O happens here.
 //!
-//! Layout, top to bottom: header card, cores card, memory card, then a
-//! one-line key hint pinned to the bottom. Cards are as tall as their
+//! Layout, top to bottom: header card, cores card, memory card, disks card
+//! (at most [`MAX_DISKS`] rows), then a one-line key hint pinned to the
+//! bottom. Cards are as tall as their
 //! content, so small machines get a compact dashboard rather than a mostly
 //! empty box.
 
@@ -33,6 +34,10 @@ const SPARK_WIDTH: usize = 60;
 const H_PAD: u16 = 2;
 /// Terminals at least this tall get vertical padding inside cards.
 const ROOMY_HEIGHT: u16 = 34;
+/// Most disks listed; the rest are counted in the card title.
+const MAX_DISKS: usize = 3;
+/// Core lines kept before the disks card gets any room.
+const MIN_CORE_ROWS: u16 = 3;
 
 /// UI state that isn't measured data.
 pub struct View<'a> {
@@ -62,15 +67,27 @@ pub fn draw(frame: &mut Frame, snap: &Snapshot, view: &View) {
     let vpad = u16::from(area.height >= ROOMY_HEIGHT);
     let card_h = 4 + 2 * vpad;
     let inner_w = (width - 2 - 2 * H_PAD) as usize;
-    // Rows left for core lines once every other part has its share.
-    let core_rows = area.height.saturating_sub(2 * card_h + 1 + 2 + 2 * vpad);
+    let frame_h = 2 + 2 * vpad;
+    // Rows left for core and disk lines once every other part has its share.
+    let rows = area.height.saturating_sub(2 * card_h + 1 + frame_h);
+    // Disks take what they need once the cores have a few lines (fewer if
+    // the cores need fewer); with no room for one disk line the card goes.
+    let core_min = MIN_CORE_ROWS.min(core_lines_wanted(snap, inner_w));
+    let disk_rows = disk_rows_wanted(snap).min(rows.saturating_sub(core_min + frame_h) as usize);
+    let disks_h = if disk_rows > 0 {
+        disk_rows as u16 + frame_h
+    } else {
+        0
+    };
+    let core_rows = rows.saturating_sub(disks_h);
     let cores = core_lines(snap, &view.theme, inner_w, core_rows.max(1) as usize);
-    let cores_h = cores.len() as u16 + 2 + 2 * vpad;
+    let cores_h = cores.len() as u16 + frame_h;
 
-    let [header, cores_area, mem, _, footer] = Layout::vertical([
+    let [header, cores_area, mem, disks, _, footer] = Layout::vertical([
         Constraint::Length(card_h),
         Constraint::Length(cores_h),
         Constraint::Length(card_h),
+        Constraint::Length(disks_h),
         Constraint::Min(0),
         Constraint::Length(1),
     ])
@@ -81,6 +98,9 @@ pub fn draw(frame: &mut Frame, snap: &Snapshot, view: &View) {
     let block = card(t, "Çekirdekler", vpad).title_top(cores_summary(snap, t).right_aligned());
     frame.render_widget(Paragraph::new(cores).block(block), cores_area);
     draw_memory(frame, mem, snap, t, vpad);
+    if disk_rows > 0 {
+        draw_disks(frame, disks, snap, t, vpad, disk_rows);
+    }
     draw_footer(frame, footer, view);
 }
 
@@ -262,6 +282,16 @@ fn choose_columns(groups: &[Group], total: usize, w: usize, height: usize) -> us
         .unwrap_or(max_cols)
 }
 
+/// Core lines needed to show every core with no height limit.
+fn core_lines_wanted(snap: &Snapshot, w: usize) -> u16 {
+    if snap.cores.is_empty() {
+        return 1;
+    }
+    let groups = groups(snap);
+    let cols = choose_columns(&groups, snap.cores.len(), w, usize::MAX);
+    lines_needed(&groups, cols).try_into().unwrap_or(u16::MAX)
+}
+
 fn core_lines(snap: &Snapshot, t: &Theme, w: usize, height: usize) -> Vec<Line<'static>> {
     if snap.cores.is_empty() {
         return vec![Line::styled("CPU kullanımı okunamadı", t.muted())];
@@ -396,7 +426,8 @@ fn core_cell(row: &CoreRow, t: &Theme, col_w: usize, label_w: usize) -> Vec<Span
 // ── Memory ──────────────────────────────────────────────────────────────
 
 const MEM_LABEL_W: usize = 6;
-const MEM_VALUE_W: usize = 21;
+/// Fits the widest value, `1023,9 GiB / 1023,9 GiB`.
+const MEM_VALUE_W: usize = 23;
 
 fn draw_memory(frame: &mut Frame, area: Rect, snap: &Snapshot, t: &Theme, vpad: u16) {
     let w = area.width.saturating_sub(2 + 2 * H_PAD) as usize;
@@ -438,9 +469,6 @@ fn mem_label(name: &str, t: &Theme, rest: Vec<Span<'static>>) -> Line<'static> {
 /// `RAM   ██████▊░░░░····  6,4 GiB / 15,3 GiB   %42`
 fn mem_row(name: &str, used: u64, cache: u64, total: u64, t: &Theme, w: usize) -> Line<'static> {
     let frac = ratio(used, total);
-    let bar_w = w
-        .saturating_sub(MEM_LABEL_W + 1 + MEM_VALUE_W + 2 + 4)
-        .max(1);
     let mut segments = vec![Segment::new(frac, Fill::Gradient(theme::USAGE))];
     if cache > 0 {
         segments.push(Segment {
@@ -449,9 +477,28 @@ fn mem_row(name: &str, used: u64, cache: u64, total: u64, t: &Theme, w: usize) -
             mono: '░',
         });
     }
+    let label = Span::styled(format!("{name:<MEM_LABEL_W$}"), t.muted());
+    meter_row(label, MEM_LABEL_W, &segments, frac, used, total, t, w)
+}
+
+/// `<label> <bar> <used> / <total>  <percent>`, exactly `w` columns when the
+/// values fit [`MEM_VALUE_W`]. `label` must be `label_w` columns wide.
+#[allow(clippy::too_many_arguments)]
+fn meter_row(
+    label: Span<'static>,
+    label_w: usize,
+    segments: &[Segment],
+    frac: f32,
+    used: u64,
+    total: u64,
+    t: &Theme,
+    w: usize,
+) -> Line<'static> {
+    let bar_w = w.saturating_sub(label_w + 1 + MEM_VALUE_W + 2 + 4).max(1);
     let (used_s, total_s) = (format::bytes(used), format::bytes(total));
     let value_w = used_s.chars().count() + 3 + total_s.chars().count();
-    let mut spans = bar::bar(t, bar_w, &segments);
+    let mut spans = vec![label];
+    spans.extend(bar::bar(t, bar_w, segments));
     spans.push(Span::raw(
         " ".repeat(1 + MEM_VALUE_W.saturating_sub(value_w)),
     ));
@@ -463,7 +510,67 @@ fn mem_row(name: &str, used: u64, cache: u64, total: u64, t: &Theme, w: usize) -
         right(&format::percent(frac), 4),
         t.usage(frac),
     ));
-    mem_label(name, t, spans)
+    Line::from(spans)
+}
+
+// ── Disks ───────────────────────────────────────────────────────────────
+
+/// Mount points longer than this are shortened with `…`.
+const MAX_DISK_LABEL_W: usize = 16;
+
+/// Lines the disks card would like: one per disk up to [`MAX_DISKS`], or
+/// one for the "none" / "unreadable" note.
+fn disk_rows_wanted(snap: &Snapshot) -> usize {
+    snap.disks
+        .as_ref()
+        .map_or(1, |d| d.len().clamp(1, MAX_DISKS))
+}
+
+fn draw_disks(frame: &mut Frame, area: Rect, snap: &Snapshot, t: &Theme, vpad: u16, rows: usize) {
+    let w = area.width.saturating_sub(2 + 2 * H_PAD) as usize;
+    let note = |s: &'static str| vec![Line::styled(s, t.muted())];
+    let (lines, hidden) = match snap.disks.as_deref() {
+        None => (note("okunamadı"), 0),
+        Some([]) => (note("disk bulunamadı"), 0),
+        Some(disks) => {
+            let shown = &disks[..rows.min(disks.len())];
+            // Mount point plus a space, like `RAM   `; never so wide that the
+            // bar gets shorter than 10 columns.
+            let room = w.saturating_sub(1 + MEM_VALUE_W + 2 + 4 + 10);
+            let label_w = shown
+                .iter()
+                .map(|d| d.mount.chars().count() + 1)
+                .max()
+                .unwrap_or(0)
+                .clamp(MEM_LABEL_W, MAX_DISK_LABEL_W + 1)
+                .min(room.max(MEM_LABEL_W));
+            let lines = shown
+                .iter()
+                .map(|d| {
+                    let name = truncate(&d.mount, label_w - 1);
+                    let label = format!("{name:<label_w$}");
+                    let frac = d.frac();
+                    meter_row(
+                        Span::styled(label, t.muted()),
+                        label_w,
+                        &[Segment::new(frac, Fill::Gradient(theme::USAGE))],
+                        frac,
+                        d.used,
+                        d.total,
+                        t,
+                        w,
+                    )
+                })
+                .collect();
+            (lines, disks.len() - shown.len())
+        }
+    };
+    let mut block = card(t, "Diskler", vpad);
+    if hidden > 0 {
+        block = block
+            .title_top(Line::styled(format!(" +{hidden} disk daha "), t.muted()).right_aligned());
+    }
+    frame.render_widget(Paragraph::new(lines).block(block), area);
 }
 
 // ── Footer & fallbacks ──────────────────────────────────────────────────
@@ -574,6 +681,11 @@ pub(crate) mod tests {
         assert!(out.contains("cpu4 ╰"));
         assert!(out.contains("%25"));
         assert!(out.contains("RAM"));
+        assert!(out.contains("Diskler"));
+        let root = out.lines().find(|l| l.contains("│  /  ")).unwrap();
+        assert!(root.contains("74,0 GiB / 221,0 GiB   %33"), "{root}");
+        assert!(out.contains("/mnt/yedek"));
+        assert!(!out.contains("/boot/efi"));
         assert!(out.contains("q çıkış"));
         assert!(out.contains("her 1 sn"));
     }
@@ -617,13 +729,55 @@ pub(crate) mod tests {
         snap.hybrid = false;
         let out = render(&snap, 80, 24);
         println!("{out}");
-        // 13 core lines: 12 rows × 2 columns (cpu0–11, cpu12–23) plus the
-        // note; the rest is a contiguous hidden tail.
-        assert!(out.contains("+104 çekirdek daha — hepsini"), "{out}");
+        // The disks card takes 5 rows, leaving 8 core lines: 7 rows × 2
+        // columns (cpu0–6, cpu7–13) plus the note; the rest is a contiguous
+        // hidden tail.
+        assert!(out.contains("+114 çekirdek daha — hepsini"), "{out}");
         let first = out.lines().find(|l| l.contains("cpu0 ")).unwrap();
-        assert!(first.contains("cpu12 "), "{first}");
-        assert!(!out.contains("cpu24 "));
+        assert!(first.contains("cpu7 "), "{first}");
+        assert!(!out.contains("cpu14 "));
         assert_eq!(out.lines().count(), 24);
+    }
+
+    #[test]
+    fn disks_capped_and_rows_exact_width() {
+        let fs = fixtures::hybrid();
+        let snap = measured(&fs, 20, 0.6);
+        let out = render(&snap, 100, 40);
+        println!("{out}");
+        // Four disks, three shown: / first, then by size.
+        assert!(out.contains("+1 disk daha"), "{out}");
+        assert!(out.contains("/oyunlar"));
+        assert!(out.contains("/media/yedek"));
+        assert!(!out.contains("/home "));
+        // Disk rows end at the same column as the memory rows.
+        let end = |needle: &str| {
+            let l = out.lines().find(|l| l.contains(needle)).unwrap();
+            l.trim_end().chars().count()
+        };
+        assert_eq!(end("RAM "), end("/oyunlar"));
+        assert_eq!(end("Swap "), end("│  /  "));
+    }
+
+    #[test]
+    fn disks_shrink_before_cores_vanish() {
+        let snap = measured(&fixtures::hybrid(), 20, 0.6);
+        // Header 4 + memory 4 + footer 1 + cores frame 2 leaves 6 rows at
+        // height 15: three core lines, then no room for a disks card.
+        let out = render(&snap, 80, 15);
+        println!("{out}");
+        assert!(out.contains("cpu0"), "{out}");
+        assert!(!out.contains("Diskler"));
+        // Two more rows: one disk line fits.
+        let out = render(&snap, 80, 17);
+        println!("{out}");
+        assert!(
+            out.contains("Diskler") && out.contains("+3 disk daha"),
+            "{out}"
+        );
+        assert!(out.contains("cpu0"), "{out}");
+        assert_eq!(out.lines().count(), 17);
+        render(&snap, 80, MIN_HEIGHT);
     }
 
     #[test]
@@ -633,6 +787,7 @@ pub(crate) mod tests {
         assert!(vm.contains("ölçülüyor…"));
         assert!(vm.contains("Paket —"));
         assert!(vm.contains("QEMU Virtual CPU"));
+        assert!(vm.contains("Diskler"));
         let ns = render(&Collector::new(&fixtures::no_swap()).collect(), 80, 24);
         assert!(ns.contains("swap yok"), "{ns}");
     }

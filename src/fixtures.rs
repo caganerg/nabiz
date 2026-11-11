@@ -30,6 +30,18 @@ pub fn meminfo(total: u64, available: u64, swap_total: u64) -> String {
     )
 }
 
+/// `/proc/mounts` with the given block-device mounts among the usual
+/// virtual filesystems.
+pub fn mounts(disks: &[(&str, &str)]) -> String {
+    let mut s = String::from("sysfs /sys sysfs rw 0 0\nproc /proc proc rw 0 0\n");
+    for (dev, point) in disks {
+        s += &format!("{dev} {point} ext4 rw,relatime 0 0\n");
+    }
+    s + "tmpfs /run tmpfs rw 0 0\n"
+}
+
+pub const GIB: u64 = 1 << 30;
+
 /// `/proc/stat` for `n` CPUs at a baseline.
 pub fn stat_idle(n: usize) -> String {
     stat_with(n, 0, 0)
@@ -89,6 +101,17 @@ pub fn quad_core_ht() -> MemFs {
         .with("/proc/stat", &stat_idle(8))
         .with("/proc/meminfo", &meminfo(16_000_000, 10_000_000, 2_000_000))
         .with("/proc/uptime", "262800.00 1000000.00\n")
+        .with(
+            "/proc/mounts",
+            &mounts(&[
+                ("/dev/nvme0n1p2", "/"),
+                ("/dev/nvme0n1p1", "/boot/efi"),
+                ("/dev/sda1", "/mnt/yedek"),
+            ]),
+        )
+        .with_space("/", 221 * GIB, 74 * GIB)
+        .with_space("/boot/efi", GIB, GIB / 100)
+        .with_space("/mnt/yedek", 931 * GIB, 412 * GIB)
         .with("/sys/class/hwmon/hwmon0/name", "acpitz\n")
         .with("/sys/class/hwmon/hwmon0/temp1_input", "27800\n")
         .with("/sys/class/hwmon/hwmon1/name", "nvme\n")
@@ -123,6 +146,19 @@ pub fn hybrid() -> MemFs {
         .with("/proc/stat", &stat_idle(20))
         .with("/proc/meminfo", &meminfo(32_000_000, 20_000_000, 8_000_000))
         .with("/proc/uptime", "100.00 900.00\n")
+        .with(
+            "/proc/mounts",
+            &mounts(&[
+                ("/dev/nvme0n1p2", "/"),
+                ("/dev/nvme0n1p3", "/home"),
+                ("/dev/nvme1n1p1", "/oyunlar"),
+                ("/dev/sda1", "/media/yedek"),
+            ]),
+        )
+        .with_space("/", 100 * GIB, 40 * GIB)
+        .with_space("/home", 400 * GIB, 300 * GIB)
+        .with_space("/oyunlar", 2000 * GIB, 1900 * GIB)
+        .with_space("/media/yedek", 1000 * GIB, 100 * GIB)
         .with("/sys/devices/cpu_core/cpus", "0-11\n")
         .with("/sys/devices/cpu_atom/cpus", "12-19\n")
         .with("/sys/class/hwmon/hwmon5/name", "coretemp\n");
@@ -183,6 +219,8 @@ pub fn no_swap() -> MemFs {
         .with("/proc/stat", &stat_idle(2))
         .with("/proc/meminfo", &meminfo(8_000_000, 4_000_000, 0))
         .with("/proc/uptime", "60.00 100.00\n")
+        .with("/proc/mounts", &mounts(&[("/dev/sda2", "/")]))
+        .with_space("/", 240 * GIB, 30 * GIB)
         .with("/sys/class/hwmon/hwmon2/name", "coretemp\n");
     for cpu in 0..2 {
         fs = topology(fs, cpu, cpu as u32, 0);

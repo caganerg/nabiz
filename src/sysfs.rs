@@ -5,12 +5,24 @@ use std::io;
 use std::path::Path;
 use std::str::FromStr;
 
-/// The two operations the collectors need: read a small text file and list
-/// the entry names of a directory.
+/// Size of a mounted filesystem, in bytes (what `statvfs` reports).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Space {
+    pub total: u64,
+    /// Free blocks, including those reserved for root.
+    pub free: u64,
+    /// Free blocks an unprivileged user may use.
+    pub avail: u64,
+}
+
+/// The operations the collectors need: read a small text file, list the
+/// entry names of a directory, and ask how full a mounted filesystem is.
 pub trait Fs {
     fn read(&self, path: &Path) -> io::Result<String>;
     /// Entry names (not full paths) of `dir`, sorted.
     fn list(&self, dir: &Path) -> io::Result<Vec<String>>;
+    /// Size of the filesystem mounted at `mount`.
+    fn space(&self, mount: &Path) -> io::Result<Space>;
 }
 
 impl<T: Fs + ?Sized> Fs for &T {
@@ -19,6 +31,9 @@ impl<T: Fs + ?Sized> Fs for &T {
     }
     fn list(&self, dir: &Path) -> io::Result<Vec<String>> {
         (**self).list(dir)
+    }
+    fn space(&self, mount: &Path) -> io::Result<Space> {
+        (**self).space(mount)
     }
 }
 
@@ -41,6 +56,16 @@ impl Fs for RealFs {
         names.sort();
         Ok(names)
     }
+
+    fn space(&self, mount: &Path) -> io::Result<Space> {
+        let st = rustix::fs::statvfs(mount)?;
+        let block = st.f_frsize;
+        Ok(Space {
+            total: st.f_blocks.saturating_mul(block),
+            free: st.f_bfree.saturating_mul(block),
+            avail: st.f_bavail.saturating_mul(block),
+        })
+    }
 }
 
 /// Reads a file and parses its trimmed contents. Any failure yields `None`.
@@ -53,7 +78,7 @@ pub use mem_fs::MemFs;
 
 #[cfg(test)]
 mod mem_fs {
-    use super::Fs;
+    use super::{Fs, Space};
     use std::cell::RefCell;
     use std::collections::{BTreeMap, BTreeSet};
     use std::io;
@@ -64,6 +89,7 @@ mod mem_fs {
     #[derive(Debug, Default)]
     pub struct MemFs {
         files: RefCell<BTreeMap<PathBuf, String>>,
+        spaces: RefCell<BTreeMap<PathBuf, Space>>,
     }
 
     impl MemFs {
@@ -80,6 +106,21 @@ mod mem_fs {
             self.files
                 .borrow_mut()
                 .insert(PathBuf::from(path), contents.to_owned());
+        }
+
+        /// Makes `mount` report `total` bytes of which `used` are taken
+        /// (and nothing reserved for root).
+        pub fn with_space(self, mount: &str, total: u64, used: u64) -> Self {
+            let free = total.saturating_sub(used);
+            self.spaces.borrow_mut().insert(
+                PathBuf::from(mount),
+                Space {
+                    total,
+                    free,
+                    avail: free,
+                },
+            );
+            self
         }
 
         pub fn remove_prefix(&self, prefix: &str) {
@@ -114,6 +155,14 @@ mod mem_fs {
                 ));
             }
             Ok(names.into_iter().collect())
+        }
+
+        fn space(&self, mount: &Path) -> io::Result<Space> {
+            self.spaces
+                .borrow()
+                .get(mount)
+                .copied()
+                .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, mount.display().to_string()))
         }
     }
 

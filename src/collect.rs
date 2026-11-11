@@ -5,6 +5,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use crate::cpu::{self, CpuTracker};
+use crate::disk::{self, Disk};
 use crate::format;
 use crate::mem::{self, MemInfo};
 use crate::sysfs::Fs;
@@ -48,6 +49,8 @@ pub struct Snapshot {
     /// Ordered for display: by core kind, package, physical core, CPU.
     pub cores: Vec<CoreRow>,
     pub mem: Option<MemInfo>,
+    /// Mounted disks, `/` first. `None` when `/proc/mounts` is unreadable.
+    pub disks: Option<Vec<Disk>>,
 }
 
 impl Snapshot {
@@ -144,6 +147,7 @@ impl<F: Fs> Collector<F> {
             hybrid: self.topology.hybrid,
             cores,
             mem: mem::read_meminfo(&self.fs).ok(),
+            disks: disk::read_disks(&self.fs),
         }
     }
 }
@@ -210,6 +214,9 @@ mod tests {
         assert!(s.has_coretemp && !s.hybrid);
         assert_eq!(s.uptime, Some(Duration::from_secs(3 * 86400 + 3600)));
         assert!(s.mem.unwrap().swap().is_some());
+        let disks = s.disks.unwrap();
+        assert_eq!(disks.len(), 2);
+        assert_eq!(disks[0].mount, "/");
     }
 
     #[test]
@@ -264,6 +271,7 @@ mod tests {
         assert!(!s.measuring());
         assert_eq!(s.overall, None);
         assert_eq!(s.mem, None);
+        assert_eq!(s.disks, None);
         assert_eq!(s.uptime, None);
         // Temperatures still come from /sys.
         assert_eq!(s.packages.len(), 1);
