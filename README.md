@@ -81,7 +81,7 @@ Debian/Ubuntu paketi olarak derlemek için (`dpkg-dev` paketi gerekir):
 
 ```sh
 ./scripts/build-deb.sh
-sudo apt install ./target/debian/nabiz_0.1.0-1_amd64.deb
+sudo apt install ./target/debian/nabiz_0.2.1-1_amd64.deb
 ```
 
 Paketin istediği en düşük glibc sürümü, derlendiği sistemden gelir.
