@@ -20,6 +20,12 @@ pub struct Disk {
 }
 
 impl Disk {
+    /// The device's short name, as `lsblk` lists it: `/dev/nvme0n1p2` is
+    /// `nvme0n1p2`, `/dev/mapper/vg-data` is `vg-data`.
+    pub fn name(&self) -> &str {
+        self.device.rsplit('/').next().unwrap_or(&self.device)
+    }
+
     /// Fullness as `df` reports it: `used / (used + avail)`, so the space
     /// reserved for root counts as unavailable rather than free.
     pub fn frac(&self) -> f32 {
@@ -159,6 +165,20 @@ tmpfs /run tmpfs rw 0 0
         assert_eq!(disks[0].device, "/dev/nvme0n1p2");
         assert!((disks[1].frac() - 0.9).abs() < 1e-6);
         assert_eq!(read_disks(&MemFs::new()), None);
+    }
+
+    #[test]
+    fn name_is_the_last_device_component() {
+        let disk = |device: &str| Disk {
+            mount: "/".into(),
+            device: device.into(),
+            total: 1,
+            used: 0,
+            avail: 1,
+        };
+        assert_eq!(disk("/dev/nvme0n1p2").name(), "nvme0n1p2");
+        assert_eq!(disk("/dev/sda1").name(), "sda1");
+        assert_eq!(disk("/dev/mapper/vg-data").name(), "vg-data");
     }
 
     #[test]

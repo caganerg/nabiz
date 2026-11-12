@@ -515,7 +515,7 @@ fn meter_row(
 
 // ── Disks ───────────────────────────────────────────────────────────────
 
-/// Mount points longer than this are shortened with `…`.
+/// Device names longer than this are shortened with `…`.
 const MAX_DISK_LABEL_W: usize = 16;
 
 /// Lines the disks card would like: one per disk up to [`MAX_DISKS`], or
@@ -534,12 +534,12 @@ fn draw_disks(frame: &mut Frame, area: Rect, snap: &Snapshot, t: &Theme, vpad: u
         Some([]) => (note("disk bulunamadı"), 0),
         Some(disks) => {
             let shown = &disks[..rows.min(disks.len())];
-            // Mount point plus a space, like `RAM   `; never so wide that the
+            // Device name plus a space, like `RAM   `; never so wide that the
             // bar gets shorter than 10 columns.
             let room = w.saturating_sub(1 + MEM_VALUE_W + 2 + 4 + 10);
             let label_w = shown
                 .iter()
-                .map(|d| d.mount.chars().count() + 1)
+                .map(|d| d.name().chars().count() + 1)
                 .max()
                 .unwrap_or(0)
                 .clamp(MEM_LABEL_W, MAX_DISK_LABEL_W + 1)
@@ -547,7 +547,7 @@ fn draw_disks(frame: &mut Frame, area: Rect, snap: &Snapshot, t: &Theme, vpad: u
             let lines = shown
                 .iter()
                 .map(|d| {
-                    let name = truncate(&d.mount, label_w - 1);
+                    let name = truncate(d.name(), label_w - 1);
                     let label = format!("{name:<label_w$}");
                     let frac = d.frac();
                     meter_row(
@@ -682,10 +682,10 @@ pub(crate) mod tests {
         assert!(out.contains("%25"));
         assert!(out.contains("RAM"));
         assert!(out.contains("Diskler"));
-        let root = out.lines().find(|l| l.contains("│  /  ")).unwrap();
+        let root = out.lines().find(|l| l.contains("│  nvme0n1p2 ")).unwrap();
         assert!(root.contains("74,0 GiB / 221,0 GiB   %33"), "{root}");
-        assert!(out.contains("/mnt/yedek"));
-        assert!(!out.contains("/boot/efi"));
+        assert!(out.contains("│  sda1 "));
+        assert!(!out.contains("nvme0n1p1"));
         assert!(out.contains("q çıkış"));
         assert!(out.contains("her 1 sn"));
     }
@@ -747,16 +747,19 @@ pub(crate) mod tests {
         println!("{out}");
         // Four disks, three shown: / first, then by size.
         assert!(out.contains("+1 disk daha"), "{out}");
-        assert!(out.contains("/oyunlar"));
-        assert!(out.contains("/media/yedek"));
-        assert!(!out.contains("/home "));
+        assert!(out.contains("nvme0n1p2 "));
+        assert!(out.contains("nvme1n1p1 "));
+        assert!(out.contains("sda1 "));
+        assert!(!out.contains("nvme0n1p3"));
+        // Devices are named, not their mount points.
+        assert!(!out.contains("/oyunlar"));
         // Disk rows end at the same column as the memory rows.
         let end = |needle: &str| {
             let l = out.lines().find(|l| l.contains(needle)).unwrap();
             l.trim_end().chars().count()
         };
-        assert_eq!(end("RAM "), end("/oyunlar"));
-        assert_eq!(end("Swap "), end("│  /  "));
+        assert_eq!(end("RAM "), end("nvme1n1p1 "));
+        assert_eq!(end("Swap "), end("sda1 "));
     }
 
     #[test]

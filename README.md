@@ -33,7 +33,7 @@ görünmüyor):
 │  Swap  ··················································      0,0 MiB / 12,3 GiB    %0  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
 ╭ Diskler ─────────────────────────────────────────────────────────────────────────────────╮
-│  /     ████████████████▋·································    74,0 GiB / 221,0 GiB   %33  │
+│  nvme0n1p2 ███████████████▍······························    74,0 GiB / 221,0 GiB   %33  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────╯
 
   q çıkış    +/- aralık                                                         her 1 sn  
@@ -195,6 +195,8 @@ Palet yumuşak tonlardadır (Nord benzeri); ekran sakin kalır, sayılar öne ç
   satırlar yüksekliğe sığmadığında eklenir ve hiçbir sütun 34 hücreden dar
   olmaz. Sütun geçişleri her zaman fiziksel çekirdeklerin arasına düşer, yani
   bir HT çifti asla bölünmez.
+- Diskler aygıt adlarıyla (`sda1`, `nvme0n1p2` gibi) listelenir; bağlama
+  noktası yalnızca `--once` çıktısında satırın sonunda yazar.
 - Diskler kartı en fazla üç satırdır; daha fazla disk varsa başlıkta
   `+N disk daha` yazar. Alçak terminallerde çekirdek kartına önce üç satır
   bırakılır, diskler ondan sonra sığdığı kadar gösterilir; hiç yer kalmazsa

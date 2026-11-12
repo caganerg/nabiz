@@ -90,11 +90,11 @@ fn write_snapshot(out: &mut String, s: &Snapshot) -> std::fmt::Result {
                 writeln!(
                     out,
                     "Disk       {} {} / {} ({}), {}",
-                    d.mount,
+                    d.name(),
                     format::bytes(d.used),
                     format::bytes(d.total),
                     format::percent(d.frac()),
-                    d.device,
+                    d.mount,
                 )?;
             }
         }
@@ -132,10 +132,10 @@ mod tests {
         let fs = fixtures::quad_core_ht();
         let text = render(&Collector::new(&fs).collect());
         assert!(
-            text.contains("Disk       / 74,0 GiB / 221,0 GiB (%33), /dev/nvme0n1p2"),
+            text.contains("Disk       nvme0n1p2 74,0 GiB / 221,0 GiB (%33), /\n"),
             "{text}"
         );
-        assert!(text.contains("Disk       /mnt/yedek 412,0 GiB / 931,0 GiB (%44)"));
+        assert!(text.contains("Disk       sda1 412,0 GiB / 931,0 GiB (%44), /mnt/yedek"));
         assert!(!text.contains("/boot/efi"));
     }
 
